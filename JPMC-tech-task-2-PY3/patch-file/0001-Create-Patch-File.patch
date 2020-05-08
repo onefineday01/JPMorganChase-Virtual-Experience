@@ -1,0 +1,174 @@
+From ca5db88f339de8f2514910dcf6679430214abfdd Mon Sep 17 00:00:00 2001
+From: Raj Jain <ritu65raj3@gmail.com>
+Date: Fri, 8 May 2020 15:03:09 +0530
+Subject: [PATCH] Create Patch File
+
+---
+ datafeed/server3.py |  2 +-
+ public/index.html   |  4 +---
+ src/App.css         |  2 +-
+ src/App.test.js     |  2 +-
+ src/App.tsx         | 28 +++++++++++++++++++++-------
+ src/Graph.tsx       | 11 ++++++++---
+ 6 files changed, 33 insertions(+), 16 deletions(-)
+
+diff --git a/datafeed/server3.py b/datafeed/server3.py
+index 2de4e28..c6d3091 100644
+--- a/datafeed/server3.py
++++ b/datafeed/server3.py
+@@ -317,4 +317,4 @@ if __name__ == '__main__':
+     if not os.path.isfile('test.csv'):
+         print ("No data found, generating...")
+         generate_csv()
+-    run(App())
++    run(App())
+\ No newline at end of file
+diff --git a/public/index.html b/public/index.html
+index 8e5de43..1c66b81 100755
+--- a/public/index.html
++++ b/public/index.html
+@@ -25,12 +25,10 @@
+     <!--
+       This HTML file is a template.
+       If you open it directly in the browser, you will see an empty page.
+-
+       You can add webfonts, meta tags, or analytics to this file.
+       The build step will place the bundled scripts into the <body> tag.
+-
+       To begin the development, run `npm start` or `yarn start`.
+       To create a production bundle, use `npm run build` or `yarn build`.
+     -->
+   </body>
+-</html>
++</html>
+\ No newline at end of file
+diff --git a/src/App.css b/src/App.css
+index 1a8747a..af27072 100755
+--- a/src/App.css
++++ b/src/App.css
+@@ -46,4 +46,4 @@
+   to {
+     transform: rotate(360deg);
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/src/App.test.js b/src/App.test.js
+index a754b20..93b64b5 100755
+--- a/src/App.test.js
++++ b/src/App.test.js
+@@ -6,4 +6,4 @@ it('renders without crashing', () => {
+   const div = document.createElement('div');
+   ReactDOM.render(<App />, div);
+   ReactDOM.unmountComponentAtNode(div);
+-});
++});
+\ No newline at end of file
+diff --git a/src/App.tsx b/src/App.tsx
+index 0728518..e77f536 100755
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -8,6 +8,7 @@ import './App.css';
+  */
+ interface IState {
+   data: ServerRespond[],
++  showGraph: boolean,
+ }
+ 
+ /**
+@@ -22,6 +23,7 @@ class App extends Component<{}, IState> {
+       // data saves the server responds.
+       // We use this state to parse data down to the child element (Graph) as element property
+       data: [],
++      showGraph: false,
+     };
+   }
+ 
+@@ -29,18 +31,30 @@ class App extends Component<{}, IState> {
+    * Render Graph react component with state.data parse as property data
+    */
+   renderGraph() {
+-    return (<Graph data={this.state.data}/>)
++    if(this.state.showGraph){
++      return (<Graph data={this.state.data}/>)
++    }
+   }
+ 
+   /**
+    * Get new data from server and update the state with the new data
+    */
+   getDataFromServer() {
+-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
+-      // Update the state by creating a new array of data that consists of
+-      // Previous data in the state and the new data from server
+-      this.setState({ data: [...this.state.data, ...serverResponds] });
+-    });
++    let i=0;
++    const interval = setInterval(() => {
++      DataStreamer.getData((serverResponds: ServerRespond[]) => {
++        // Update the state by creating a new array of data that consists of
++        // Previous data in the state and the new data from server
++        this.setState({ 
++          data: serverResponds,
++          showGraph: true,
++         });
++      });
++      i++;
++      if(i>1000){
++        clearInterval(interval);
++      }
++    },100);
+   }
+ 
+   /**
+@@ -71,4 +85,4 @@ class App extends Component<{}, IState> {
+   }
+ }
+ 
+-export default App;
++export default App;
+\ No newline at end of file
+diff --git a/src/Graph.tsx b/src/Graph.tsx
+index ec1430e..e80aedc 100644
+--- a/src/Graph.tsx
++++ b/src/Graph.tsx
+@@ -14,7 +14,7 @@ interface IProps {
+  * Perspective library adds load to HTMLElement prototype.
+  * This interface acts as a wrapper for Typescript compiler.
+  */
+-interface PerspectiveViewerElement {
++interface PerspectiveViewerElement extends HTMLElement {
+   load: (table: Table) => void,
+ }
+ 
+@@ -32,7 +32,7 @@ class Graph extends Component<IProps, {}> {
+ 
+   componentDidMount() {
+     // Get element to attach the table from the DOM.
+-    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
++    const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+ 
+     const schema = {
+       stock: 'string',
+@@ -49,6 +49,11 @@ class Graph extends Component<IProps, {}> {
+ 
+       // Add more Perspective configurations here.
+       elem.load(this.table);
++      elem.setAttribute('view', 'y_line');
++      elem.setAttribute('column-pivots', '["stock"]');
++      elem.setAttribute('row-pivots', '["timestamp"]');
++      elem.setAttribute('columns', '["top_ask_price"]');
++      elem.setAttribute('aggregates','{"stock":"distinct count","top_ask_price":"avg","top_bid_price":"avg","timestamp":"distinct count"}');
+     }
+   }
+ 
+@@ -70,4 +75,4 @@ class Graph extends Component<IProps, {}> {
+   }
+ }
+ 
+-export default Graph;
++export default Graph;
+\ No newline at end of file
+-- 
+2.26.2.windows.1
+
